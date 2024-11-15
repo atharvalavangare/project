@@ -1,32 +1,40 @@
 pipeline {
     agent any
     environment {
-        NODEJS_HOME = tool name: 'NodeJS' // Replace with your Node.js installation name in Jenkins
+        NODEJS_HOME = tool name: 'NodeJS' // Use your configured Node.js tool in Jenkins
         PATH = "${NODEJS_HOME}/bin:${env.PATH}"
     }
     stages {
         stage('Checkout') {
             steps {
+                // Clone the GitHub repository
                 git branch: 'main', url: 'https://github.com/atharvalavangare/project.git'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                dir('my-angular-app') { // Navigate to the Angular app folder
+                    sh 'npm install'
+                }
             }
         }
         stage('Build Angular App') {
             steps {
-                dir('project/my-angular-app') { // Navigate to the Angular app directory
-                    sh 'npm install'
+                dir('my-angular-app') { // Stay inside the Angular app folder
                     sh 'npm run build --prod'
                 }
             }
         }
         stage('Deploy to Nginx') {
             steps {
-                sh 'sudo cp -r project/my-angular-app/dist/my-angular-app/* /var/www/angular-app/'
+                // Copy the build files to the Nginx deployment folder
+                sh 'sudo cp -r my-angular-app/dist/my-angular-app/* /var/www/angular-app/'
                 sh 'sudo systemctl reload nginx'
             }
         }
     }
     triggers {
-        // Trigger the pipeline on push to main branch
+        // Trigger on push to main branch
         githubPush()
     }
 }
